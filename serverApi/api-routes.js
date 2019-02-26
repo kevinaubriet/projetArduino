@@ -1,0 +1,25 @@
+// api-routes.js
+// Initialize express router
+let router = require("express").Router();
+// Set default API response
+router.get("/", function(req, res) {
+  res.json({
+    status: "API Its Working",
+    message: "Welcome to RESTHub crafted with love!"
+  });
+});
+// Import contact controller
+var dataController = require("./dataController");
+// Contact routes
+router
+  .route("/temperatures")
+  .get(dataController.index)
+  .post(dataController.new);
+router
+  .route("/temperatures/:datam_id")
+  .get(dataController.view)
+  .patch(dataController.update)
+  .put(dataController.update)
+  .delete(dataController.delete);
+// Export API routes
+module.exports = router;
