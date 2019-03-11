@@ -21,5 +21,6 @@ router
   .patch(dataController.update)
   .put(dataController.update)
   .delete(dataController.delete);
+//router.route("/temperatures/temperature").get(dataController.view).;
 // Export API routes
 module.exports = router;

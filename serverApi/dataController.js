@@ -1,6 +1,7 @@
 // datamController.js
 // Import datam model
 Datam = require("./dataModel");
+
 // Handle index actions
 exports.index = function(req, res) {
   Datam.get(function(err, datams) {
@@ -21,13 +22,19 @@ exports.index = function(req, res) {
 exports.new = function(req, res) {
   var datam = new Datam();
   datam.valeur = req.body.valeur;
+  datam.type = req.body.type;
   //datam.time = req.body.time;
   // save the datam and check for errors
   datam.save(function(err) {
     // if (err)
     //     res.json(err);
     res.json({
-      message: "New datam created!" + " truc crée : " + req.body.valeur,
+      message:
+        "New datam created!" +
+        " valeur : " +
+        req.body.valeur +
+        "type de donnée :" +
+        req.body.type,
       data: datam
     });
   });
