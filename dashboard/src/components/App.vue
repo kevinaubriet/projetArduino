@@ -81,6 +81,7 @@
 </template>
 
 <script>
+  //"infoTemperature[0].valeur"
 import Dashboard from "./Dashboard";
 
 import DateTime from "./atoms/DateTime";
@@ -143,6 +144,7 @@ export default {
         })
         .then(data => {
           console.log(data[0].valeur);
+          this.temperature = parseFloat(data[0].valeur)
         })
         .catch(err => {
           console.log("une erreur est intervenue");
@@ -159,7 +161,7 @@ export default {
       chartData1: {},
       chartData2: {},
       chartData3: {},
-      info,
+      infoTemperature:[],
       listData: [
         { label: "Something 1", value: 123 },
         { label: "Something 2", value: 90 },
@@ -170,7 +172,7 @@ export default {
     };
   },
   mounted() {
-    this.update2();
+   //this.update2();
     /*
     fetch("http://localhost:8080/api/temperatures")
       .then(res => res.json())
@@ -200,11 +202,9 @@ export default {
   },
   created() {
     var self = this;
-
+  
     // Temperature
-    setInterval(function() {
-      self.temperature = Math.random() * 30;
-    }, 5000);
+    self.update2()
 
     // Battery
     setInterval(function() {
