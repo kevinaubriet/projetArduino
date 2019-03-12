@@ -8,6 +8,20 @@ let mongoose = require("mongoose");
 let app = express();
 // Import routes
 let apiRoutes = require("./api-routes");
+
+//cors
+var cors = require("cors");
+//enables cors
+app.use(
+  cors({
+    allowedHeaders: ["sessionId", "Content-Type"],
+    exposedHeaders: ["sessionId"],
+    origin: "*",
+    methods: "GET,HEAD,PUT,PATCH,POST,DELETE",
+    preflightContinue: false
+  })
+);
+
 // Configure bodyparser to handle post requests
 app.use(
   bodyParser.urlencoded({
@@ -19,7 +33,7 @@ app.use(bodyParser.json());
 mongoose.connect("mongodb://localhost/resthub");
 var db = mongoose.connection;
 // Setup server port
-var port = process.env.PORT || 8080;
+var port = process.env.PORT || 8081;
 // Send message for default URL
 app.get("/", (req, res) => res.send("Hello World with Express"));
 // Use Api routes in the App

@@ -3,7 +3,7 @@
 #include <WiFi.h>
 #include <HTTPClient.h>
 
-const int lumSwitch = 100;
+const int lumSwitch = 1000;
 const float tempSwitch = 24.0;
 const int ledPin = 19;
 
@@ -23,8 +23,8 @@ void print_ip_status(){
 }
 
 void connect_wifi(){
- const char* ssid = "HUAWEI P20";
- const char *password= "12345678"; 
+ const char* ssid = "theLivebox";
+ const char *password= "salut2603"; 
  
  Serial.println("\nConnecting Wifi...");
  WiFi.begin(ssid, password);
@@ -44,7 +44,7 @@ void setup(){
   pinMode(ledPin , OUTPUT) ;
   tempSensor.begin(); // Init du capteur et de l’entite OneWire
 
-  connect_wifi();
+  
 
   tempSensor.requestTemperaturesByIndex(0); // Le capteur 0 realise une acquisition
   // RMQ : on pourrait avoir plusieurs capteurs
@@ -54,11 +54,12 @@ void setup(){
   Serial.print("Temperature: ");
   Serial.print(tempValue);
 
+  connect_wifi();
       
  if(WiFi.status()== WL_CONNECTED){   //Check WiFi connection status
   
    HTTPClient http;   
-
+   Serial.print("connecté !");
    /*
    http.begin("http://jsonplaceholder.typicode.com/posts");  //Specify destination for HTTP request
    http.addHeader("Content-Type", "text/plain");             //Specify content-type header
@@ -104,6 +105,12 @@ void setup(){
  
  }
 
+/*
+ // Armement du timer en micro sec
+esp_sleep_enable_timer_wakeup(TIME_TO_SLEEP ∗ us_TO_S_FACTOR) ;
+// Deep sleep mode
+esp_deep_sleep_start( ) ;
+*/
 
  
 }
@@ -130,7 +137,7 @@ void loop(){
 
   // LAMPE PAR RAPPORT A LA LUMIERE
   if (lumValue < lumSwitch) {
-    digitalWrite(ledPin , LOW) ; // turn the LED on (HIGH is the voltage level)
+    digitalWrite(ledPin , HIGH) ; // turn the LED on (HIGH is the voltage level)
   }else {
     digitalWrite(ledPin , LOW) ; // turn the LED off by making the voltage LOW
   }
