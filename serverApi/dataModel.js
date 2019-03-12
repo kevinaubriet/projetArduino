@@ -1,6 +1,6 @@
 // dataModel.js
 var mongoose = require("mongoose");
-mongoose.connect("mongodb://localhost/arduino");
+mongoose.connect("mongodb://localhost/arduinoAubrietBouajla");
 // Setup schema
 var dataSchema = mongoose.Schema({
   valeur: {

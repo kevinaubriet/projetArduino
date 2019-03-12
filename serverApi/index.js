@@ -30,7 +30,7 @@ app.use(
 );
 app.use(bodyParser.json());
 // Connect to Mongoose and set connection variable
-mongoose.connect("mongodb://localhost/resthub");
+mongoose.connect("mongodb://localhost/resthubAubrietBouajla");
 var db = mongoose.connection;
 // Setup server port
 var port = process.env.PORT || 8081;
