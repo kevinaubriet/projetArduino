@@ -51,10 +51,10 @@ exports.view = function(req, res) {
 };
 // Handle update datam info
 exports.update = function(req, res) {
-  Datam.findById(req.params.datam_id, function(err, datam) {
+  Datam.findById(req.params._id, function(err, datam) {
     if (err) res.send(err);
+
     datam.valeur = req.body.valeur;
-    //datam.time = req.body.time;
     // save the datam and check for errors
     datam.save(function(err) {
       if (err) res.json(err);
@@ -69,7 +69,7 @@ exports.update = function(req, res) {
 exports.delete = function(req, res) {
   Datam.remove(
     {
-      _id: req.params.datam_id
+      _id: req.params._id
     },
     function(err, datam) {
       if (err) res.send(err);

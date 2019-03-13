@@ -9,18 +9,21 @@ router.get("/", function(req, res) {
   });
 });
 // Import contact controller
-var dataController = require("./dataController");
+var dataController = require("./data/dataController");
+var ledController = require("./led/ledController");
 // Contact routes
 router
   .route("/temperatures")
   .get(dataController.index)
   .post(dataController.new);
 router
-  .route("/temperatures/:datam_id")
-  .get(dataController.view)
-  .patch(dataController.update)
-  .put(dataController.update)
-  .delete(dataController.delete);
-//router.route("/temperatures/temperature").get(dataController.view).;
+  .route("/led")
+  .get(ledController.index)
+  .post(ledController.new);
+router
+  .route("/led/:datam_id")
+  .patch(ledController.update)
+  .put(ledController.update)
+  .delete(ledController.delete);
 // Export API routes
 module.exports = router;

@@ -1,14 +1,15 @@
 // dataModel.js
 var mongoose = require("mongoose");
-mongoose.connect("mongodb://localhost/arduinoAubrietBouajla");
+mongoose.connect("mongodb://localhost/ledAubrietBouajla");
 // Setup schema
-var dataSchema = mongoose.Schema({
-  valeur: {
-    type: String,
-    required: true
+var ledSchema = mongoose.Schema({
+  id: {
+    type: Number,
+    required: true,
+    default: 1
   },
-  type: {
-    type: String,
+  valeur: {
+    type: Boolean,
     required: true
   },
   time: {
@@ -17,7 +18,7 @@ var dataSchema = mongoose.Schema({
   }
 });
 // Export Contact model
-var Datam = (module.exports = mongoose.model("temperatures", dataSchema));
+var Datam = (module.exports = mongoose.model("led", ledSchema));
 module.exports.get = function(callback, limit) {
   Datam.find(callback).limit(limit);
 };

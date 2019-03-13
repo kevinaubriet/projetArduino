@@ -57,10 +57,34 @@ void setup(){
   connect_wifi();
       
  if(WiFi.status()== WL_CONNECTED){   //Check WiFi connection status
+
+   // configure targeted server and url  
+  HTTPClient serv;
+  const char* url_serv_name = "http://httpbin.org/ip";
+  serv.begin(url_serv_name); // Ce serveur est suppose renvoyer 
+                         // une page Web contenant votre IP
+
+  // start connection and send HTTP header
+  int HttpRetCode=serv.GET();
   
-   HTTPClient http;   
+  if (HttpRetCode > 0){
+      // HTTP header has been send and Server response header has been handled
+      Serial.print("Received data ...");
+      String Contents = serv.getString();
+      Serial.print(HttpRetCode);
+      Serial.print("\n");
+      Serial.print(Contents);
+      Serial.print("\n");
+      
+      serv.end(); // End connection
+    }
+
+    
+
+    
+   /*  
    Serial.print("connecté !");
-   /*
+   
    http.begin("http://jsonplaceholder.typicode.com/posts");  //Specify destination for HTTP request
    http.addHeader("Content-Type", "text/plain");             //Specify content-type header
  
@@ -73,10 +97,13 @@ void setup(){
     Serial.print("\n");
     Serial.println(httpResponseCode);   //Print return code
     Serial.println(response);           //Print request answer
-    */
+    
+   }*/
 
+
+ 
   /*
-   http.begin("http://localhost/temperatures");  //Specify destination for HTTP request
+   http.begin("http://localhost:8081/api/temperatures");  //Specify destination for HTTP request
    http.addHeader("Content-Type", "text/plain");             //Specify content-type header
  
    int httpResponseCode = http.POST("POSTING from ESP32");   //Send the actual POST request
@@ -105,6 +132,8 @@ void setup(){
  
  }
 
+ 
+
 /*
  // Armement du timer en micro sec
 esp_sleep_enable_timer_wakeup(TIME_TO_SLEEP ∗ us_TO_S_FACTOR) ;
@@ -116,7 +145,9 @@ esp_deep_sleep_start( ) ;
 }
 
 void loop(){
+
   
+  /*
   // TEMPERATURE  
   tempSensor.requestTemperaturesByIndex(0); // Le capteur 0 realise une acquisition
   // RMQ : on pourrait avoir plusieurs capteurs
@@ -141,6 +172,7 @@ void loop(){
   }else {
     digitalWrite(ledPin , LOW) ; // turn the LED off by making the voltage LOW
   }
+
 
 /*
   // LAMPE PAR RAPPORT A LA TEMPERATURE
