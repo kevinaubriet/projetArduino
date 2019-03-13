@@ -81,7 +81,7 @@
 </template>
 
 <script>
-  //"infoTemperature[0].valeur"
+//"infoTemperature[0].valeur"
 import Dashboard from "./Dashboard";
 
 import DateTime from "./atoms/DateTime";
@@ -131,7 +131,7 @@ export default {
       let result = await dataService.getData();
       console.log(result);
     },
-    update2() {
+    getTemperatures() {
       let url = "http://localhost:8081/api/temperatures";
       fetch(url, {
         method: "GET"
@@ -144,7 +144,61 @@ export default {
         })
         .then(data => {
           console.log(data[0].valeur);
-          this.temperature = parseFloat(data[0].valeur)
+          this.temperature = parseFloat(data[0].valeur);
+        })
+        .catch(err => {
+          console.log("une erreur est intervenue");
+        });
+    },
+    modifEtatLed() {
+      let url = "http://localhost:8081/api/led/" + this.idLed;
+
+      var details = {
+        valeur: "true"
+      };
+
+      var formBody = [];
+      for (var property in details) {
+        var encodedKey = encodeURIComponent(property);
+        var encodedValue = encodeURIComponent(details[property]);
+        formBody.push(encodedKey + "=" + encodedValue);
+      }
+      formBody = formBody.join("&");
+
+      console.log(url);
+
+      fetch(url, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/x-www-form-urlencoded"
+        },
+        body: formBody
+      })
+        .then(responseJSON => {
+          return responseJSON.json();
+        })
+        .then(responseJS => {
+          console.log(responseJS.msg);
+        })
+        .catch(err => {
+          console.log(err);
+        });
+    },
+    getIdLed() {
+      let url = "http://localhost:8081/api/led";
+      fetch(url, {
+        method: "GET"
+      })
+        .then(responseJSON => {
+          return responseJSON.json();
+        })
+        .then(responseJS => {
+          return responseJS.data;
+        })
+        .then(data => {
+          this.idLed = data[0]._id;
+          console.log(this.idLed);
+          this.modifEtatLed();
         })
         .catch(err => {
           console.log("une erreur est intervenue");
@@ -155,13 +209,14 @@ export default {
   data() {
     return {
       temperature: 0,
+      idLed: 0,
       battery: 100,
       snr: 0,
       rssi: -100,
       chartData1: {},
       chartData2: {},
       chartData3: {},
-      infoTemperature:[],
+      infoTemperature: [],
       listData: [
         { label: "Something 1", value: 123 },
         { label: "Something 2", value: 90 },
@@ -171,40 +226,15 @@ export default {
       ]
     };
   },
-  mounted() {
-   //this.update2();
-    /*
-    fetch("http://localhost:8080/api/temperatures")
-      .then(res => res.json())
-      .then(res => res.map(console.log(userNames)));
-*/
-    /*
-    var res = dataService.getData();
-    console.log(res);
-
-    axios({
-      method: "GET",
-      url: "http://localhost:8080/api/temperatures"
-    }).then(
-      result => {
-        console.log(result);
-        //this.ip = result.data.origin;
-      },
-      error => {
-        console.error(error);
-      }
-    );
-    /*
-    axios
-      .get("http://localhost:8080/api/temperatures")
-      .then(response => (this.info = response));
-    print(this.info);*/
-  },
+  mounted() {},
   created() {
     var self = this;
-  
+
     // Temperature
-    self.update2()
+    self.getTemperatures();
+
+    //idLed
+    self.getIdLed();
 
     // Battery
     setInterval(function() {
