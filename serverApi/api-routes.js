@@ -14,7 +14,7 @@ var ledController = require("./led/ledController");
 // Contact routes
 router
   .route("/datas")
-  .get(dataController.index)
+  .get(dataController.list)
   .post(dataController.new);
 router.route("/datas/:type").get(dataController.index);
 router

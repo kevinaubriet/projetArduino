@@ -3,8 +3,8 @@
 Datam = require("./dataModel");
 
 // Handle index actions
-/*
-exports.index = function(req, res) {
+
+exports.list = function(req, res) {
   Datam.get(function(err, datams) {
     if (err) {
       res.json({
@@ -19,29 +19,15 @@ exports.index = function(req, res) {
     });
   });
 };
-*/
+
 exports.index = function(req, res) {
-  var type = req.params.type;
+  var typeParam = req.params.type;
 
-  if (type == "temperature") {
-    console.log("temperatureeeee");
-  } else if (type == "lumiere") {
-    console.log("lumiereeeeeeeee");
-  } else {
-    console.log("rien");
-  }
-
-  Datam.get(function(err, datams) {
-    if (err) {
-      res.json({
-        status: "error",
-        message: err
-      });
-    }
+  Datam.find({ type: typeParam }, function(err, datam) {
+    if (err) res.send(err);
     res.json({
-      status: "success",
-      message: "Datams retrieved successfully",
-      data: datams
+      message: "trouvé !",
+      data: datam
     });
   });
 };
