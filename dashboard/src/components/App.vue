@@ -6,8 +6,12 @@
       <weather slot="after" city="Barnsley"></weather>
     </value-tile>
 
-    <indicator-tile position="a3:b3" :value="true" color="green" label="Living room lights"></indicator-tile>
-    <indicator-tile position="a4:b4" :value="true" color="blue" label="Garage lights"></indicator-tile>
+    <indicator-tile position="a3:b3" :value="etatLed" color="green" label="Led Arduino"></indicator-tile>
+
+    <tile position="c3:d3">
+      <v-btn large @click="modifEtatButton" v-show="!etatLed">Allumer</v-btn>
+      <v-btn large @click="modifEtatButton" v-show="etatLed">Eteindre</v-btn>
+    </tile>
 
     <value-tile
       position="c1:d2"
@@ -19,8 +23,6 @@
     >
       <percentile-change slot="after" :value="temperature"></percentile-change>
     </value-tile>
-
-    <sparkline-tile position="c3:d3" :value="temperature" :samples="50"></sparkline-tile>
 
     <gauge-tile
       position="c4:d5"
@@ -102,6 +104,7 @@ import BatteryTile from "./BatteryTile";
 import LevelTile from "./LevelTile";
 import TextTile from "./TextTile";
 import DataSerice from "../services/DataService";
+import Tile from "./atoms/Tile";
 import axios from "axios";
 
 const dataService = new DataSerice();
@@ -124,7 +127,8 @@ export default {
     IndicatorTile,
     BatteryTile,
     LevelTile,
-    TextTile
+    TextTile,
+    Tile
   },
   methods: {
     async update() {
@@ -150,11 +154,31 @@ export default {
           console.log("une erreur est intervenue");
         });
     },
-    modifEtatLed() {
+    createEtatLed() {
+      let url = "http://localhost:8081/api/led";
+      fetch(url, {
+        method: "POST"
+      })
+        .then(responseJSON => {
+          return responseJSON.json();
+        })
+        .then(responseJS => {
+          return responseJS.data;
+        })
+        .then(data => {
+          this.getIdLed();
+          //console.log(data[0].valeur);
+          //this.temperature = parseFloat(data[0].valeur);
+        })
+        .catch(err => {
+          console.log("une erreur est intervenue");
+        });
+    },
+    getEtatLed() {
       let url = "http://localhost:8081/api/led/" + this.idLed;
 
       var details = {
-        valeur: "true"
+        valeur: false
       };
 
       var formBody = [];
@@ -164,8 +188,6 @@ export default {
         formBody.push(encodedKey + "=" + encodedValue);
       }
       formBody = formBody.join("&");
-
-      console.log(url);
 
       fetch(url, {
         method: "PUT",
@@ -197,11 +219,48 @@ export default {
         })
         .then(data => {
           this.idLed = data[0]._id;
+          this.etatLed = data[0].valeur;
           console.log(this.idLed);
-          this.modifEtatLed();
+          this.getEtatLed();
         })
         .catch(err => {
           console.log("une erreur est intervenue");
+        });
+    },
+    modifEtatButton() {
+      this.etatLed = !this.etatLed;
+      this.modifEtatLed();
+    },
+    modifEtatLed() {
+      let url = "http://localhost:8081/api/led/" + this.idLed;
+
+      var details = {
+        valeur: this.etatLed
+      };
+
+      var formBody = [];
+      for (var property in details) {
+        var encodedKey = encodeURIComponent(property);
+        var encodedValue = encodeURIComponent(details[property]);
+        formBody.push(encodedKey + "=" + encodedValue);
+      }
+      formBody = formBody.join("&");
+
+      fetch(url, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/x-www-form-urlencoded"
+        },
+        body: formBody
+      })
+        .then(responseJSON => {
+          return responseJSON.json();
+        })
+        .then(responseJS => {
+          console.log(responseJS.msg);
+        })
+        .catch(err => {
+          console.log(err);
         });
     }
   },
@@ -210,6 +269,8 @@ export default {
     return {
       temperature: 0,
       idLed: 0,
+      etatLed: false,
+      isFavorite: false,
       battery: 100,
       snr: 0,
       rssi: -100,
@@ -234,7 +295,7 @@ export default {
     self.getTemperatures();
 
     //idLed
-    self.getIdLed();
+    self.createEtatLed();
 
     // Battery
     setInterval(function() {
