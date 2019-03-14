@@ -13,9 +13,10 @@ var dataController = require("./data/dataController");
 var ledController = require("./led/ledController");
 // Contact routes
 router
-  .route("/temperatures")
+  .route("/datas")
   .get(dataController.index)
   .post(dataController.new);
+router.route("/datas/:type").get(dataController.index);
 router
   .route("/led")
   .get(ledController.index)

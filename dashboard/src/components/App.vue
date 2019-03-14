@@ -136,7 +136,7 @@ export default {
       console.log(result);
     },
     getTemperatures() {
-      let url = "http://localhost:8081/api/temperatures";
+      let url = "http://localhost:8081/api/datas";
       fetch(url, {
         method: "GET"
       })

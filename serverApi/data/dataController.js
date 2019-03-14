@@ -3,6 +3,7 @@
 Datam = require("./dataModel");
 
 // Handle index actions
+/*
 exports.index = function(req, res) {
   Datam.get(function(err, datams) {
     if (err) {
@@ -18,6 +19,33 @@ exports.index = function(req, res) {
     });
   });
 };
+*/
+exports.index = function(req, res) {
+  var type = req.params.type;
+
+  if (type == "temperature") {
+    console.log("temperatureeeee");
+  } else if (type == "lumiere") {
+    console.log("lumiereeeeeeeee");
+  } else {
+    console.log("rien");
+  }
+
+  Datam.get(function(err, datams) {
+    if (err) {
+      res.json({
+        status: "error",
+        message: err
+      });
+    }
+    res.json({
+      status: "success",
+      message: "Datams retrieved successfully",
+      data: datams
+    });
+  });
+};
+
 // Handle create datam actions
 exports.new = function(req, res) {
   var datam = new Datam();
