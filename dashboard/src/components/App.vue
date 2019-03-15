@@ -1,8 +1,8 @@
 <template>
   <dashboard columns="10" rows="8">
     <value-tile position="a1:b2" heading="Barnsley" color="blue">
-      <date-time slot="before" format="ddd DD/MM" time-zone="Europe/London"></date-time>
-      <date-time slot="value" format="HH:mm" time-zone="Europe/London"></date-time>
+      <date-time slot="before" format="ddd DD/MM" time-zone="Europe/Paris"></date-time>
+      <date-time slot="value" format="HH:mm" time-zone="Europe/Paris"></date-time>
       <weather slot="after" city="Barnsley"></weather>
     </value-tile>
 
@@ -37,9 +37,9 @@
       position="e1:f2"
       heading="Lumiere"
       color="yellow"
-      :value="temperature"
+      :value="lumiere"
       :decimal-places="2"
-      unit="°C"
+      unit="lum"
     >
       <percentile-change slot="after" :value="temperature"></percentile-change>
     </value-tile>
@@ -47,7 +47,7 @@
       position="e3:e5"
       color="yellow"
       label="Temperature"
-      :max="30"
+      :max="40"
       :value="temperature"
       unit="°C"
     ></level-tile>
@@ -61,7 +61,7 @@
       unit="%"
     ></level-tile>
 
-    <list-tile position="g1:h3" heading="Something" color="red" :values="listData"></list-tile>
+    <list-tile position="g1:h3" heading="Datas" color="red" :values="datas"></list-tile>
     <text-tile position="g4:h5" value="Lorem ipsum dolar sit amet consectetur adipiscing elit"></text-tile>
     <!--
     <value-tile position="i1:j2" heading="SNR" color="orange" :value="snr" unit="dB">
@@ -77,8 +77,22 @@
     
     <chart-tile position="i3:j5" :data="chartData3" type="doughnut"></chart-tile>
     -->
-    <chart-tile position="a6:f8" heading="Something" color="red" :data="chartData1" type="bar"></chart-tile>
-    <chart-tile position="g6:j8" heading="Something" color="blue" :data="chartData1" type="line"></chart-tile>
+    <chart-tile
+      :key="componentKeyBar"
+      position="a6:f8"
+      heading="Something"
+      color="red"
+      :data="datasForGraph"
+      type="bar"
+    ></chart-tile>
+    <chart-tile
+      :key="componentKeyLine"
+      position="g6:j8"
+      heading="Something"
+      color="blue"
+      :data="datasForGraph"
+      type="line"
+    ></chart-tile>
   </dashboard>
 </template>
 
@@ -106,6 +120,7 @@ import TextTile from "./TextTile";
 import DataSerice from "../services/DataService";
 import Tile from "./atoms/Tile";
 import axios from "axios";
+import Vue from "vue";
 
 const dataService = new DataSerice();
 
@@ -135,7 +150,7 @@ export default {
       let result = await dataService.getData();
       console.log(result);
     },
-    getTemperatures() {
+    getDatas() {
       let url = "http://localhost:8081/api/datas";
       fetch(url, {
         method: "GET"
@@ -147,8 +162,86 @@ export default {
           return responseJS.data;
         })
         .then(data => {
-          console.log(data[0].valeur);
-          this.temperature = parseFloat(data[0].valeur);
+          //console.log(data[0].valeur);
+          //this.temperatures = data;
+          var taille = Object.values(data).length;
+          this.datas = [];
+          data.forEach(element => {
+            this.datas.push({
+              label: element.type + " : ",
+              value: element.valeur
+            });
+          });
+          this.datas = this.datas.reverse();
+
+          //console.log("tab datas : " + this.datas.length);
+        })
+        .catch(err => {
+          console.log("une erreur est intervenue");
+        });
+    },
+    getTemperatures() {
+      let url = "http://localhost:8081/api/datas/temperature";
+      fetch(url, {
+        method: "GET"
+      })
+        .then(responseJSON => {
+          return responseJSON.json();
+        })
+        .then(responseJS => {
+          return responseJS.data;
+        })
+        .then(data => {
+          //console.log(data[0].valeur);
+          //this.temperatures = data;
+          this.apiFormatForGraph(data);
+
+          var taille = Object.values(data).length;
+          this.temperature = parseFloat(data[taille - 1].valeur);
+
+          this.temperatures = [];
+          data.forEach(element => {
+            this.temperatures.push({
+              label: "temperature",
+              value: element.valeur
+            });
+          });
+
+          this.apiFormatForGraph(data);
+          this.forceRerender();
+          /*
+          console.log("tableau plus haut");
+          console.log(this.datasForGraph);*/
+          //console.log("tab temp : " + this.temperatures.length);
+        })
+        .catch(err => {
+          console.log("une erreur est intervenue");
+        });
+    },
+    getLumieres() {
+      let url = "http://localhost:8081/api/datas/lumiere";
+      fetch(url, {
+        method: "GET"
+      })
+        .then(responseJSON => {
+          return responseJSON.json();
+        })
+        .then(responseJS => {
+          return responseJS.data;
+        })
+        .then(data => {
+          var taille = Object.values(data).length;
+          this.lumiere = parseFloat(data[taille - 1].valeur);
+
+          this.lumieres = [];
+          data.forEach(element => {
+            this.lumieres.push({
+              label: "lumiere",
+              value: element.valeur
+            });
+          });
+
+          //console.log("tab lum : " + this.lumieres.length);
         })
         .catch(err => {
           console.log("une erreur est intervenue");
@@ -199,9 +292,6 @@ export default {
         .then(responseJSON => {
           return responseJSON.json();
         })
-        .then(responseJS => {
-          console.log(responseJS.msg);
-        })
         .catch(err => {
           console.log(err);
         });
@@ -220,7 +310,7 @@ export default {
         .then(data => {
           this.idLed = data[0]._id;
           this.etatLed = data[0].valeur;
-          console.log(this.idLed);
+          //console.log(this.idLed);
           this.getEtatLed();
         })
         .catch(err => {
@@ -262,12 +352,69 @@ export default {
         .catch(err => {
           console.log(err);
         });
+    },
+    apiFormatForGraph(tab) {
+      var labelsO = [];
+      var dataTemp = [];
+
+      //var dataLum = [];
+
+      tab.forEach(element => {
+        dataTemp.push(parseInt(element.valeur));
+        labelsO.push(this.convertDate(element.time));
+      });
+      /*
+      this.lumieres.forEach(element => {
+        dataLum.push(element.value);
+      });*/
+
+      var datasetsO = [
+        {
+          label: "Temperature",
+          color: "#2ecc71",
+          data: dataTemp
+        } /*,
+        { label: "Lumiere", color: "#3498db", data: dataLum }
+        */
+      ];
+
+      this.datasForGraph = {
+        datasets: datasetsO,
+        labels: labelsO
+      };
+    },
+    forceRerender() {
+      this.componentKeyBar += 1;
+      this.componentKeyLine += 1;
+    },
+    convertDate(dateapi) {
+      var date = new Date(dateapi);
+      return (
+        date.getMonth() +
+        1 +
+        "/" +
+        date.getDate() +
+        "/" +
+        date.getFullYear() +
+        " " +
+        date.getHours() +
+        ":" +
+        date.getMinutes()
+      );
     }
   },
 
   data() {
     return {
+      componentKeyBar: 0,
+      componentKeyLine: 0,
+      datas: [],
+      datasForGraph: {},
+      temperatures: [],
       temperature: 0,
+      lumieres: [],
+      lumiere: 0,
+      temperatureToChart: [],
       idLed: 0,
       etatLed: false,
       isFavorite: false,
@@ -287,15 +434,37 @@ export default {
       ]
     };
   },
-  mounted() {},
+  mounted() {
+    //this.getTemperatures();
+  },
   created() {
     var self = this;
+
+    /*
+    setInterval(function() {
+      self.getDatas();
+
+      // Temperature
+      self.getTemperatures();
+
+      // Lumiere
+      self.getLumieres();
+
+      //idLed
+      self.getIdLed(); //self.createEtatLed();
+    }, 2000);
+*/
+    // Datas
+    self.getDatas();
 
     // Temperature
     self.getTemperatures();
 
+    // Lumiere
+    self.getLumieres();
+
     //idLed
-    self.createEtatLed();
+    self.getIdLed(); //self.createEtatLed();
 
     // Battery
     setInterval(function() {
@@ -307,35 +476,6 @@ export default {
       self.rssi = (Math.round(Math.random() * 20) + 100) * -1;
       self.snr = Math.round(Math.random() * 20);
     }, 4000);
-
-    self.chartData1 = {
-      labels: [
-        "Jan",
-        "Feb",
-        "Mar",
-        "Apr",
-        "May",
-        "Jun",
-        "Jul",
-        "Aug",
-        "Sep",
-        "Oct",
-        "Nov",
-        "Dec"
-      ],
-      datasets: [
-        {
-          label: "Test",
-          color: "#2ecc71",
-          data: [10, 15, 20, 20, 10, 15, 5, 7, 30, 10, 12, 15]
-        },
-        {
-          label: "Test2",
-          color: "#3498db",
-          data: [10, 15, 5, 7, 30, 10, 12, 15, 10, 15, 20, 20]
-        }
-      ]
-    };
 
     self.chartData3 = {
       labels: ["Jan", "Feb", "Mar"],

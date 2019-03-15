@@ -83,7 +83,7 @@ exports.update = function(req, res) {
 exports.delete = function(req, res) {
   Datam.remove(
     {
-      _id: req.params._id
+      _id: req.params.datam_id
     },
     function(err, datam) {
       if (err) res.send(err);

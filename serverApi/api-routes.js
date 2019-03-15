@@ -18,6 +18,11 @@ router
   .post(dataController.new);
 router.route("/datas/:type").get(dataController.index);
 router
+  .route("/datas/:datam_id")
+  .patch(dataController.update)
+  .put(dataController.update)
+  .delete(dataController.delete);
+router
   .route("/led")
   .get(ledController.index)
   .post(ledController.new);
