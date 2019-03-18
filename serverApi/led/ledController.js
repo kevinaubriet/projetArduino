@@ -46,16 +46,16 @@ exports.view = function(req, res) {
 };
 // Handle update datam info
 exports.update = function(req, res) {
+  /*
   if (!LedM.findById(req.params.datam_id)) {
     console.log("existe");
   } else {
     console.log("existe pas");
   }
+  */
 
   LedM.findById(req.params.datam_id, function(err, datam) {
     if (err) {
-      //router.route("/led").post(ledController.new);
-      //res.send(err);
       datam.valeur = false;
       // save the datam and check for errors
       datam.save(function(err) {

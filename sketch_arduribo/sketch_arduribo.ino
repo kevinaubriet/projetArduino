@@ -6,7 +6,7 @@
 
 #define mqtt_server "broker.hivemq.com"
 
-#define led_topic "m1/miage/ab/test3" //Topic led
+#define led_topic "m1/miage/ab/controleLed" //Topic led
 
 #define temperature_topic "m1/miage/ab/temperature" //Topic température
 #define lumiere_topic "m1/miage/ab/lumiere" //Topic lumiere
@@ -14,13 +14,16 @@
 #define identifiant_wifi "HUAWEI P20"
 #define mdp_wifi "12345678"
 
+const char* url_serv_name = "http://localhost:8081/api";
+const char* url_serv_name_test = "http://httpbin.org/ip";
 
 const int ledPin = 19;
 const int TempPin = 23;
 
 char message_buff[100];
 
-
+  //HTTP
+  HTTPClient serv;
 WiFiClient espClient;
 PubSubClient client(espClient);
 
@@ -38,26 +41,43 @@ void setup(){
 
   connect_wifi();
 
-  // MQTT
+    // MQTT
   client.setServer(mqtt_server, 1883); 
   client.setCallback(callback); 
-  client.subscribe(led_topic);
-/*
- // Armement du timer en micro sec
-esp_sleep_enable_timer_wakeup(TIME_TO_SLEEP ∗ us_TO_S_FACTOR) ;
-// Deep sleep mode
-esp_deep_sleep_start( ) ;
-*/
 
- 
+  /*
+  serv.begin(url_serv_name);
+  int httpCode = serv.GET();
+  if (httpCode > 0) { 
+
+      Serial.print("Received data ...");
+      String Contents = serv.getString();
+      
+      Serial.print(httpCode);//200
+      Serial.print("\n");
+      
+      Serial.print(Contents);//json objet
+      Serial.print("\n");
+
+      serv.end(); // End connection
+   }
+   else {
+      Serial.println("Error on HTTP request");
+      Serial.println(httpCode);
+      String Contents = serv.getString();
+      Serial.print(Contents);//json objet
+      Serial.print("\n");
+      
+   }*/
 }
 
 void loop(){
-  
+ 
   int32_t period = 5000; // 5 sec
 
-  /*--- Publish Temperature periodically   */
+  /*--- Publish Datas periodically   */
   delay(period);
+
 
   //récup valeur des capteurs
   getTemperature();
@@ -85,12 +105,8 @@ void loop(){
   }
   
   // MQTT Publish
-   mqtt_publish(temperature_topic, copyTemp);
-  //mqtt_publish(lumiere_topic, copyLum);
-   
-  
-
-  
+  mqtt_publish(temperature_topic, copyTemp);
+  mqtt_publish(lumiere_topic, copyLum);
 
   client.loop(); // Process MQTT ... une fois par loop()
   

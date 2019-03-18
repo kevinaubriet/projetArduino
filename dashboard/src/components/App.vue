@@ -66,7 +66,6 @@
 </template>
 
 <script>
-//"infoTemperature[0].valeur"
 import Dashboard from "./Dashboard";
 import Mqtt from "../mqtt.js";
 
@@ -93,7 +92,7 @@ import axios from "axios";
 import Vue from "vue";
 
 const dataService = new DataSerice();
-const publishTopic = "m1/miage/ab/test3";
+const publishTopic = "m1/miage/ab/controleLed";
 const subscribeTopicTemp = "m1/miage/ab/temperature";
 const subscribeTopicLum = "m1/miage/ab/lumiere";
 
@@ -135,8 +134,6 @@ export default {
           return responseJS.data;
         })
         .then(data => {
-          //console.log(data[0].valeur);
-          //this.temperatures = data;
           var taille = Object.values(data).length;
           this.datas = [];
           data.forEach(element => {
@@ -146,8 +143,6 @@ export default {
             });
           });
           this.datas = this.datas.reverse();
-
-          //console.log("tab datas : " + this.datas.length);
         })
         .catch(err => {
           console.log("une erreur est intervenue");
@@ -165,8 +160,6 @@ export default {
           return responseJS.data;
         })
         .then(data => {
-          //console.log(data[0].valeur);
-          //this.temperatures = data;
           this.apiFormatForGraph(data);
 
           var taille = Object.values(data).length;
@@ -182,10 +175,6 @@ export default {
 
           this.apiFormatForGraph(data);
           this.forceRerender();
-          /*
-          console.log("tableau plus haut");
-          console.log(this.datasForGraph);*/
-          //console.log("tab temp : " + this.temperatures.length);
         })
         .catch(err => {
           console.log("une erreur est intervenue");
@@ -218,7 +207,6 @@ export default {
           return responseJSON.json();
         })
         .then(responseJS => {
-          console.log(responseJS);
           return responseJS.data;
         })
         .then(data => {
@@ -226,9 +214,6 @@ export default {
           this.getTemperatures();
           this.getLumieres();
           this.getDatas();
-          //this.getIdLed();
-          //console.log(data[0].valeur);
-          //this.temperature = parseFloat(data[0].valeur);
         })
         .catch(err => {
           console.log("une erreur est intervenue");
@@ -256,8 +241,6 @@ export default {
               value: element.valeur
             });
           });
-
-          //console.log("tab lum : " + this.lumieres.length);
         })
         .catch(err => {
           console.log("une erreur est intervenue");
@@ -277,8 +260,6 @@ export default {
         })
         .then(data => {
           this.getIdLed();
-          //console.log(data[0].valeur);
-          //this.temperature = parseFloat(data[0].valeur);
         })
         .catch(err => {
           console.log("une erreur est intervenue");
@@ -327,7 +308,6 @@ export default {
         .then(data => {
           this.idLed = data[0]._id;
           this.etatLed = data[0].valeur;
-          //console.log(this.idLed);
           this.setEtatLedFalse();
         })
         .catch(err => {
@@ -337,7 +317,6 @@ export default {
     modifEtatButton() {
       this.etatLed = !this.etatLed;
       this.modifEtatLed();
-      //var objectLed = { valeur: this.etatLed, _id: this.idLed };
 
       Mqtt.publish(publishTopic, this.etatLed + "");
     },
@@ -373,8 +352,6 @@ export default {
     apiFormatForGraph(tab) {
       var labelsO = [];
       var dataTemp = [];
-
-      //var dataLum = [];
 
       tab.forEach(element => {
         dataTemp.push(parseInt(element.valeur));
@@ -436,7 +413,6 @@ export default {
       idLed: 0,
       etatLed: false,
       isFavorite: false,
-      battery: 100,
       snr: 0,
       rssi: -100,
       infoTemperature: []
@@ -447,13 +423,27 @@ export default {
     Mqtt.subscribe(subscribeTopicLum);
     Mqtt.receive((topicname, message) => {
       if (topicname == subscribeTopicTemp) {
-        console.log("la temperature va etre envoyé en bd");
-        console.log(topicname);
-        console.log(message);
+        console.log(
+          message.type +
+            " : " +
+            message.valeur +
+            " venant du topic " +
+            topicname +
+            " va etre envoyé en bd"
+        );
 
         this.temperatureMqtt = message.valeur;
         this.createData(message.valeur, message.type);
       } else if (topicname == subscribeTopicLum) {
+        console.log(
+          message.type +
+            " : " +
+            message.valeur +
+            " venant du topic " +
+            topicname +
+            " va etre envoyé en bd"
+        );
+
         this.lumiereMqtt = message.valeur;
         this.createData(message.valeur, message.type);
       }
@@ -461,23 +451,6 @@ export default {
   },
   created() {
     var self = this;
-
-    //this.getTemperatures();
-
-    /*
-    setInterval(function() {
-      self.getDatas();
-
-      // Temperature
-      self.getTemperatures();
-
-      // Lumiere
-      self.getLumieres();
-
-      //idLed
-      self.getIdLed(); //self.createEtatLed();
-    }, 2000);
-*/
 
     // Datas
     self.getDatas();
@@ -489,18 +462,8 @@ export default {
     self.getLumieres();
 
     //idLed
-    self.getIdLed(); //self.createEtatLed();
-
-    // Battery
-    setInterval(function() {
-      self.battery = Math.round(Math.random() * 100);
-    }, 4500);
-
-    // Snr / Rssi
-    setInterval(function() {
-      self.rssi = (Math.round(Math.random() * 20) + 100) * -1;
-      self.snr = Math.round(Math.random() * 20);
-    }, 4000);
+    self.getIdLed();
+    //self.createEtatLed();
   }
 };
 </script>
