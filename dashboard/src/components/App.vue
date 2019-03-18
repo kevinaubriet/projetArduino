@@ -21,9 +21,9 @@
       :decimal-places="2"
       unit="°C"
     >
-      <percentile-change slot="after" :value="temperature"></percentile-change>
+      <percentile-change slot="after" :value="temperatureMqtt"></percentile-change>
     </value-tile>
-
+    <!-- 
     <gauge-tile
       position="c4:d5"
       color="green"
@@ -32,7 +32,7 @@
       :decimal-places="2"
       unit="°C"
     ></gauge-tile>
-
+    -->
     <value-tile
       position="e1:f2"
       heading="Lumiere"
@@ -41,7 +41,7 @@
       :decimal-places="2"
       unit="lum"
     >
-      <percentile-change slot="after" :value="temperature"></percentile-change>
+      <percentile-change slot="after" :value="lumiereMqtt"></percentile-change>
     </value-tile>
     <level-tile
       position="e3:e5"
@@ -51,6 +51,7 @@
       :value="temperature"
       unit="°C"
     ></level-tile>
+    <!--
     <level-tile
       position="f3:f5"
       color="green"
@@ -60,10 +61,12 @@
       :value="battery"
       unit="%"
     ></level-tile>
-
-    <list-tile position="g1:h3" heading="Datas" color="red" :values="datas"></list-tile>
-    <text-tile position="g4:h5" value="Lorem ipsum dolar sit amet consectetur adipiscing elit"></text-tile>
+    -->
+    <list-tile position="i1:j5" heading="Datas" color="red" :values="datas"></list-tile>
+    <list-tile position="g1:h5" heading="Datas" color="red" :values="datas"></list-tile>
     <!--
+    <text-tile position="g4:h5" value="Lorem ipsum dolar sit amet consectetur adipiscing elit"></text-tile>
+    
     <value-tile position="i1:j2" heading="SNR" color="orange" :value="snr" unit="dB">
       <span slot="after">
         <i class="fa fa-caret-down color--white"></i>
@@ -85,20 +88,14 @@
       :data="datasForGraph"
       type="bar"
     ></chart-tile>
-    <chart-tile
-      :key="componentKeyLine"
-      position="g6:j8"
-      heading="Something"
-      color="blue"
-      :data="datasForGraph"
-      type="line"
-    ></chart-tile>
+    <chart-tile position="g6:j8" heading="Something" color="blue" :data="datasForGraph" type="line"></chart-tile>
   </dashboard>
 </template>
 
 <script>
 //"infoTemperature[0].valeur"
 import Dashboard from "./Dashboard";
+import Mqtt from "../mqtt.js";
 
 import DateTime from "./atoms/DateTime";
 import PercentileChange from "./atoms/PercentileChange";
@@ -123,6 +120,9 @@ import axios from "axios";
 import Vue from "vue";
 
 const dataService = new DataSerice();
+const publishTopic = "m1/miage/ab/test3";
+const subscribeTopicTemp = "m1/miage/ab/temperature";
+const subscribeTopicLum = "m1/miage/ab/lumiere";
 
 export default {
   components: {
@@ -218,6 +218,48 @@ export default {
           console.log("une erreur est intervenue");
         });
     },
+    createData(valeurData, typeData) {
+      let url = "http://localhost:8081/api/datas";
+
+      var details = {
+        valeur: valeurData,
+        type: typeData
+      };
+
+      var formBody = [];
+      for (var property in details) {
+        var encodedKey = encodeURIComponent(property);
+        var encodedValue = encodeURIComponent(details[property]);
+        formBody.push(encodedKey + "=" + encodedValue);
+      }
+      formBody = formBody.join("&");
+
+      fetch(url, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/x-www-form-urlencoded"
+        },
+        body: formBody
+      })
+        .then(responseJSON => {
+          return responseJSON.json();
+        })
+        .then(responseJS => {
+          console.log(responseJS);
+          return responseJS.data;
+        })
+        .then(data => {
+          console.log(data);
+          this.getTemperatures();
+          this.getLumieres();
+          //this.getIdLed();
+          //console.log(data[0].valeur);
+          //this.temperature = parseFloat(data[0].valeur);
+        })
+        .catch(err => {
+          console.log("une erreur est intervenue");
+        });
+    },
     getLumieres() {
       let url = "http://localhost:8081/api/datas/lumiere";
       fetch(url, {
@@ -249,6 +291,7 @@ export default {
     },
     createEtatLed() {
       let url = "http://localhost:8081/api/led";
+
       fetch(url, {
         method: "POST"
       })
@@ -267,7 +310,7 @@ export default {
           console.log("une erreur est intervenue");
         });
     },
-    getEtatLed() {
+    setEtatLedFalse() {
       let url = "http://localhost:8081/api/led/" + this.idLed;
 
       var details = {
@@ -311,7 +354,7 @@ export default {
           this.idLed = data[0]._id;
           this.etatLed = data[0].valeur;
           //console.log(this.idLed);
-          this.getEtatLed();
+          this.setEtatLedFalse();
         })
         .catch(err => {
           console.log("une erreur est intervenue");
@@ -320,6 +363,8 @@ export default {
     modifEtatButton() {
       this.etatLed = !this.etatLed;
       this.modifEtatLed();
+      var objectLed = { valeur: this.etatLed, _id: this.idLed };
+      Mqtt.publish(publishTopic, objectLed);
     },
     modifEtatLed() {
       let url = "http://localhost:8081/api/led/" + this.idLed;
@@ -345,9 +390,6 @@ export default {
       })
         .then(responseJSON => {
           return responseJSON.json();
-        })
-        .then(responseJS => {
-          console.log(responseJS.msg);
         })
         .catch(err => {
           console.log(err);
@@ -390,10 +432,9 @@ export default {
     convertDate(dateapi) {
       var date = new Date(dateapi);
       return (
-        date.getMonth() +
-        1 +
-        "/" +
         date.getDate() +
+        "/" +
+        (date.getMonth() + 1) +
         "/" +
         date.getFullYear() +
         " " +
@@ -412,8 +453,10 @@ export default {
       datasForGraph: {},
       temperatures: [],
       temperature: 0,
+      temperatureMqtt: 0,
       lumieres: [],
       lumiere: 0,
+      lumiereMqtt: 0,
       temperatureToChart: [],
       idLed: 0,
       etatLed: false,
@@ -421,24 +464,26 @@ export default {
       battery: 100,
       snr: 0,
       rssi: -100,
-      chartData1: {},
-      chartData2: {},
-      chartData3: {},
-      infoTemperature: [],
-      listData: [
-        { label: "Something 1", value: 123 },
-        { label: "Something 2", value: 90 },
-        { label: "Something 3", value: 87 },
-        { label: "Something 4", value: 30 },
-        { label: "Something 5", value: 10 }
-      ]
+      infoTemperature: []
     };
   },
   mounted() {
-    //this.getTemperatures();
+    Mqtt.subscribe(subscribeTopicTemp);
+    Mqtt.receive((topicname, message) => {
+      if (topicname == subscribeTopicTemp) {
+        console.log("la temperature va etre envoyé en bd");
+        console.log(topicname);
+        console.log(message);
+
+        this.createData(message.valeur, message.type);
+      } else if (topicname == "autretest") {
+      }
+    });
   },
   created() {
     var self = this;
+
+    //this.getTemperatures();
 
     /*
     setInterval(function() {
@@ -454,6 +499,7 @@ export default {
       self.getIdLed(); //self.createEtatLed();
     }, 2000);
 */
+
     // Datas
     self.getDatas();
 
@@ -476,17 +522,6 @@ export default {
       self.rssi = (Math.round(Math.random() * 20) + 100) * -1;
       self.snr = Math.round(Math.random() * 20);
     }, 4000);
-
-    self.chartData3 = {
-      labels: ["Jan", "Feb", "Mar"],
-      datasets: [
-        {
-          label: "Test",
-          color: ["#e74c3c", "#3498db", "#2ecc71"],
-          data: [10, 15, 20]
-        }
-      ]
-    };
   }
 };
 </script>
