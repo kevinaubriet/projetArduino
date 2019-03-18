@@ -43,7 +43,6 @@
       unit="°C"
     ></level-tile>
 
-    <list-tile position="i1:j5" heading="Datas" color="red" :values="datas"></list-tile>
     <list-tile position="g1:h5" heading="Datas" color="red" :values="datas"></list-tile>
 
     <chart-tile
