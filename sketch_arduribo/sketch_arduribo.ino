@@ -9,21 +9,24 @@
 #define led_topic "m1/miage/ab/test3" //Topic led
 
 #define temperature_topic "m1/miage/ab/temperature" //Topic température
-#define lumiere_topic "m1/miage/ab/lumiere" //Topic température
+#define lumiere_topic "m1/miage/ab/lumiere" //Topic lumiere
+
+#define identifiant_wifi "HUAWEI P20"
+#define mdp_wifi "12345678"
+
 
 const int ledPin = 19;
+const int TempPin = 23;
 
 char message_buff[100];
-long lastMsg = 0;   //Horodatage du dernier message publié sur MQTT
-long lastRecu = 0;
-bool debug = false;  //Affiche sur la console si True
+
 
 WiFiClient espClient;
 PubSubClient client(espClient);
 
 int lumValue;
 float tempValue;
-OneWire oneWire(23) ; // Pour utiliser une entite oneWire sur le port 22
+OneWire oneWire(TempPin) ; // Pour utiliser une entite oneWire sur le port 22
 DallasTemperature tempSensor(&oneWire) ; // Cette entite est utilisee par le capteur
 
 void setup(){ 
@@ -34,22 +37,11 @@ void setup(){
   tempSensor.begin(); // Init du capteur et de l’entite OneWire
 
   connect_wifi();
-      
- 
- 
+
+  // MQTT
   client.setServer(mqtt_server, 1883); 
-  client.setCallback(callback);
-  Serial.println("je suis connecté");
- 
-
+  client.setCallback(callback); 
   client.subscribe(led_topic);
- 
-
-  
- //"{ \"valeur\": \"30\", \"_id": \"00000\" }"
-    
- 
-
 /*
  // Armement du timer en micro sec
 esp_sleep_enable_timer_wakeup(TIME_TO_SLEEP ∗ us_TO_S_FACTOR) ;
@@ -62,20 +54,16 @@ esp_deep_sleep_start( ) ;
 
 void loop(){
   
-int32_t period = 5000; // 5 sec
+  int32_t period = 5000; // 5 sec
 
   /*--- Publish Temperature periodically   */
   delay(period);
-  //temperature = get_Temperature();
-  // Convert the value to a char array
-  //temperature = temperature + 1;
-  /*char tempString[8];
-  dtostrf(temperature, 1, 2, tempString);*/
 
+  //récup valeur des capteurs
   getTemperature();
   getLumiere();
 
-  
+  //conversion en objet JSON
   String bufTemp;
   bufTemp += F("{ \"valeur\":");
   bufTemp += String(tempValue, 2);
@@ -83,38 +71,35 @@ int32_t period = 5000; // 5 sec
 
   char copyTemp[50];
   bufTemp.toCharArray(copyTemp, 50);
-  // MQTT Publish
-  //mqtt_publish(temperature_topic, copyTemp);
-
+  
   String bufLum;
   bufLum += F("{ \"valeur\":");
   bufLum += lumValue;
   bufLum += F(", \"type\": \"lumiere\" }");
   
-
   char copyLum[50];
   bufLum.toCharArray(copyLum, 50);
-  // MQTT Publish
-  mqtt_publish(lumiere_topic, copyLum);
-   
-  
 
   if (!client.connected()) { 
     mqtt_mysubscribe((char *)(led_topic));
   }
+  
+  // MQTT Publish
+   mqtt_publish(temperature_topic, copyTemp);
+  //mqtt_publish(lumiere_topic, copyLum);
+   
+  
 
-client.loop(); // Process MQTT ... une fois par loop()
   
+
+  client.loop(); // Process MQTT ... une fois par loop()
   
-  //delay(1000) ;
+
 }
 
 void getTemperature(){
     tempSensor.requestTemperaturesByIndex(0); // Le capteur 0 realise une acquisition
-    // RMQ : on pourrait avoir plusieurs capteurs
-    // sur le port oneWire !
-    tempValue = tempSensor.getTempCByIndex(0); // On transfert le float qui correspond a
-    // temp acquise
+    tempValue = tempSensor.getTempCByIndex(0); // On transfert le float qui correspond a temp acquise
 }
 
 void getLumiere(){
@@ -122,28 +107,7 @@ void getLumiere(){
 }
 
 
-char* generate_json(float value){
-
-  /*String message = "{\"date\"";
-  //sensor type
-  message += ":\"";
-  message += sensor;
-  message += "\",";*/
-
-  //sensor value
-  String message = "{\"value\"";
-  message += ":\"";
-  message += value;
-  message += "\"}";
-
-  char* copy = new char[message.length()+1];
-  message.toCharArray(copy, message.length()+1);
-  return copy;
-}
-
-
 // Déclenche les actions à la réception d'un message
-// D'après http://m2mio.tumblr.com/post/30048662088/a-simple-example-arduino-mqtt-m2mio
 void callback(char* topic, byte* payload, unsigned int length) {
 
   // Callback if a message is published on this topic.
@@ -189,14 +153,12 @@ void print_ip_status(){
   Serial.print("\n");
   Serial.print("MAC address: ");
   Serial.print(WiFi.macAddress());
-  Serial.print("\n"); 
-
-  
+  Serial.print("\n");  
 }
 
 void connect_wifi(){
- const char* ssid = "Villalucie";
- const char *password= "villaluciejulie"; 
+ const char* ssid = identifiant_wifi;
+ const char *password= mdp_wifi; 
  Serial.println("--------------------------------------------");
  Serial.println("\nConnecting Wifi...");
  WiFi.begin(ssid, password);
