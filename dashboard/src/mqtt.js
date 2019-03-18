@@ -32,7 +32,7 @@ console.log(client);
 
 export default {
   publish: (topic, message) => {
-    client.publish(topic, JSON.stringify(message));
+    client.publish(topic, message);
     console.log("publié");
   },
   subscribe: (topic, options = {}) => {

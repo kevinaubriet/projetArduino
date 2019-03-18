@@ -17,27 +17,18 @@
       position="c1:d2"
       heading="Temperature"
       color="yellow"
-      :value="temperature"
+      :value="temperatureMqtt"
       :decimal-places="2"
       unit="°C"
     >
       <percentile-change slot="after" :value="temperatureMqtt"></percentile-change>
     </value-tile>
-    <!-- 
-    <gauge-tile
-      position="c4:d5"
-      color="green"
-      :value="temperature"
-      :max="30"
-      :decimal-places="2"
-      unit="°C"
-    ></gauge-tile>
-    -->
+
     <value-tile
       position="e1:f2"
       heading="Lumiere"
       color="yellow"
-      :value="lumiere"
+      :value="lumiereMqtt"
       :decimal-places="2"
       unit="lum"
     >
@@ -48,38 +39,13 @@
       color="yellow"
       label="Temperature"
       :max="40"
-      :value="temperature"
+      :value="temperatureMqtt"
       unit="°C"
     ></level-tile>
-    <!--
-    <level-tile
-      position="f3:f5"
-      color="green"
-      label="Battery"
-      :min="0"
-      :max="100"
-      :value="battery"
-      unit="%"
-    ></level-tile>
-    -->
+
     <list-tile position="i1:j5" heading="Datas" color="red" :values="datas"></list-tile>
     <list-tile position="g1:h5" heading="Datas" color="red" :values="datas"></list-tile>
-    <!--
-    <text-tile position="g4:h5" value="Lorem ipsum dolar sit amet consectetur adipiscing elit"></text-tile>
-    
-    <value-tile position="i1:j2" heading="SNR" color="orange" :value="snr" unit="dB">
-      <span slot="after">
-        <i class="fa fa-caret-down color--white"></i>
-        <min-value :value="snr"></min-value>&nbsp;|&nbsp;
-        <i class="fa fa-caret-up color--white"></i>
-        <max-value :value="snr"></max-value>&nbsp;|&nbsp;
-        <i class="fa fa-sort color--white"></i>
-        <ema-value :value="snr"></ema-value>
-      </span>
-    </value-tile>
-    
-    <chart-tile position="i3:j5" :data="chartData3" type="doughnut"></chart-tile>
-    -->
+
     <chart-tile
       :key="componentKeyBar"
       position="a6:f8"
@@ -88,7 +54,14 @@
       :data="datasForGraph"
       type="bar"
     ></chart-tile>
-    <chart-tile position="g6:j8" heading="Something" color="blue" :data="datasForGraph" type="line"></chart-tile>
+    <chart-tile
+      :key="componentKeyBar"
+      position="g6:j8"
+      heading="Something"
+      color="blue"
+      :data="datasForGraph"
+      type="line"
+    ></chart-tile>
   </dashboard>
 </template>
 
@@ -252,6 +225,7 @@ export default {
           console.log(data);
           this.getTemperatures();
           this.getLumieres();
+          this.getDatas();
           //this.getIdLed();
           //console.log(data[0].valeur);
           //this.temperature = parseFloat(data[0].valeur);
@@ -363,8 +337,9 @@ export default {
     modifEtatButton() {
       this.etatLed = !this.etatLed;
       this.modifEtatLed();
-      var objectLed = { valeur: this.etatLed, _id: this.idLed };
-      Mqtt.publish(publishTopic, objectLed);
+      //var objectLed = { valeur: this.etatLed, _id: this.idLed };
+
+      Mqtt.publish(publishTopic, this.etatLed + "");
     },
     modifEtatLed() {
       let url = "http://localhost:8081/api/led/" + this.idLed;
@@ -469,14 +444,18 @@ export default {
   },
   mounted() {
     Mqtt.subscribe(subscribeTopicTemp);
+    Mqtt.subscribe(subscribeTopicLum);
     Mqtt.receive((topicname, message) => {
       if (topicname == subscribeTopicTemp) {
         console.log("la temperature va etre envoyé en bd");
         console.log(topicname);
         console.log(message);
 
+        this.temperatureMqtt = message.valeur;
         this.createData(message.valeur, message.type);
-      } else if (topicname == "autretest") {
+      } else if (topicname == subscribeTopicLum) {
+        this.lumiereMqtt = message.valeur;
+        this.createData(message.valeur, message.type);
       }
     });
   },

@@ -6,12 +6,11 @@
 
 #define mqtt_server "broker.hivemq.com"
 
-#define led_topic "m1/miage/ab/test3" //Topic température
+#define led_topic "m1/miage/ab/test3" //Topic led
 
-#define temperature_topic "m1/miage/ab/temperature"
+#define temperature_topic "m1/miage/ab/temperature" //Topic température
+#define lumiere_topic "m1/miage/ab/lumiere" //Topic température
 
-const int lumSwitch = 1000;
-const float tempSwitch = 24.0;
 const int ledPin = 19;
 
 char message_buff[100];
@@ -41,8 +40,9 @@ void setup(){
   client.setServer(mqtt_server, 1883); 
   client.setCallback(callback);
   Serial.println("je suis connecté");
+ 
 
-  //client.subscribe(led_topic);
+  client.subscribe(led_topic);
  
 
   
@@ -63,11 +63,6 @@ esp_deep_sleep_start( ) ;
 void loop(){
   
 int32_t period = 5000; // 5 sec
-  
-  /*--- subscribe to TOPIC_TEMPERATURE if not yet ! */
-  /*if (!client.connected()) { 
-    mqtt_mysubscribe((char *)(TOPIC_TEMP));
-  }*/
 
   /*--- Publish Temperature periodically   */
   delay(period);
@@ -78,72 +73,72 @@ int32_t period = 5000; // 5 sec
   dtostrf(temperature, 1, 2, tempString);*/
 
   getTemperature();
+  getLumiere();
 
   
   String bufTemp;
   bufTemp += F("{ \"valeur\":");
   bufTemp += String(tempValue, 2);
-  bufTemp += F(", \"type\": \"temperature\" }");
-  
+  bufTemp += F(", \"type\": \"temperature\" }"); 
 
   char copyTemp[50];
   bufTemp.toCharArray(copyTemp, 50);
-
-
-
-  //String obj =  "{ \"valeur\":"+ tempValue +", \"_id\": 0 }";
   // MQTT Publish
-  mqtt_publish(temperature_topic, copyTemp);
+  //mqtt_publish(temperature_topic, copyTemp);
+
+  String bufLum;
+  bufLum += F("{ \"valeur\":");
+  bufLum += lumValue;
+  bufLum += F(", \"type\": \"lumiere\" }");
+  
+
+  char copyLum[50];
+  bufLum.toCharArray(copyLum, 50);
+  // MQTT Publish
+  mqtt_publish(lumiere_topic, copyLum);
    
-  client.loop(); // Process MQTT ... une fois par loop()
-  
-  /*
-  // TEMPERATURE  
-  tempSensor.requestTemperaturesByIndex(0); // Le capteur 0 realise une acquisition
-  // RMQ : on pourrait avoir plusieurs capteurs
-  // sur le port oneWire !
-  tempValue = tempSensor.getTempCByIndex(0); // On transfert le float qui correspond a
-  // temp acquise
-  Serial.print("Temperature: ");
-  Serial.print(tempValue);
-  Serial.print(" C\n");
   
 
-  // LUMIERE
-  lumValue = analogRead(A0) ; // read analog input pin 0
-  Serial.print("Lumière : ");
-  Serial.print(lumValue,DEC) ; // Prints the value to the serial port
-  Serial.print("\n") ;
-
-
-  // LAMPE PAR RAPPORT A LA LUMIERE
-  if (lumValue < lumSwitch) {
-    digitalWrite(ledPin , HIGH) ; // turn the LED on (HIGH is the voltage level)
-  }else {
-    digitalWrite(ledPin , LOW) ; // turn the LED off by making the voltage LOW
+  if (!client.connected()) { 
+    mqtt_mysubscribe((char *)(led_topic));
   }
 
-
-/*
-  // LAMPE PAR RAPPORT A LA TEMPERATURE
-  if (tempValue < tempSwitch) {
-    digitalWrite(ledPin , LOW) ; // turn the LED on (HIGH is the voltage level)
-  }else {
-    digitalWrite(ledPin , HIGH) ; // turn the LED off by making the voltage LOW
-  }*/
+client.loop(); // Process MQTT ... une fois par loop()
+  
   
   //delay(1000) ;
 }
 
 void getTemperature(){
-  tempSensor.requestTemperaturesByIndex(0); // Le capteur 0 realise une acquisition
-  // RMQ : on pourrait avoir plusieurs capteurs
-  // sur le port oneWire !
-  tempValue = tempSensor.getTempCByIndex(0); // On transfert le float qui correspond a
-  // temp acquise
-  Serial.print("Temperature: ");
-  Serial.println(tempValue);
+    tempSensor.requestTemperaturesByIndex(0); // Le capteur 0 realise une acquisition
+    // RMQ : on pourrait avoir plusieurs capteurs
+    // sur le port oneWire !
+    tempValue = tempSensor.getTempCByIndex(0); // On transfert le float qui correspond a
+    // temp acquise
+}
 
+void getLumiere(){
+    lumValue = analogRead(A0) ; // read analog input pin 0
+}
+
+
+char* generate_json(float value){
+
+  /*String message = "{\"date\"";
+  //sensor type
+  message += ":\"";
+  message += sensor;
+  message += "\",";*/
+
+  //sensor value
+  String message = "{\"value\"";
+  message += ":\"";
+  message += value;
+  message += "\"}";
+
+  char* copy = new char[message.length()+1];
+  message.toCharArray(copy, message.length()+1);
+  return copy;
 }
 
 
@@ -151,44 +146,41 @@ void getTemperature(){
 // D'après http://m2mio.tumblr.com/post/30048662088/a-simple-example-arduino-mqtt-m2mio
 void callback(char* topic, byte* payload, unsigned int length) {
 
-  Serial.print("Message arrived in topic: ");
-  Serial.println(topic);
- 
-  Serial.print("Message:");
+  // Callback if a message is published on this topic.
+  
+  Serial.print("Message arrived on topic: ");
+  Serial.print(topic);
+  Serial.print(". Message: ");
+
+  // Byte list to String and print to Serial
+  String messageTemp;
   for (int i = 0; i < length; i++) {
     Serial.print((char)payload[i]);
+    messageTemp += (char)payload[i];
   }
- 
   Serial.println();
-  Serial.println("-----------------------");
-  
-  /*
-  Serial.println("jesuisla");
-  int i = 0;
-  if ( debug ) {
-    Serial.println("Message recu =>  topic: " + String(topic));
-    Serial.print(" | longueur: " + String(length,DEC));
-  }
-  // create character buffer with ending null terminator (string)
-  for(i=0; i<length; i++) {
-    message_buff[i] = payload[i];
-  }
-  message_buff[i] = '\0';
-  
-  String msgString = String(message_buff);
-  if ( debug ) {
-    Serial.println("Payload: " + msgString);
-  }
-*/
-  /*
-  if ( msgString == "ON" ) {
-    digitalWrite(D2,HIGH);  
-  } else {
-    digitalWrite(D2,LOW);  
-  }*/
 
+  // Feel free to add more if statements to control more GPIOs with MQTT
+
+  // If a message is received on the topic,
+  // you check if the message is either "on" or "off".
+  // Changes the output state according to the message
+  if (String(topic) == led_topic) {
+    Serial.print("Changing output to ");
+    if (messageTemp == "true") {
+      Serial.println("on");
+      set_LED(HIGH);
+    }
+    else if (messageTemp == "false") {
+      Serial.println("off");
+      set_LED(LOW);
+    }
+  }
 }
 
+void set_LED(int v){
+  digitalWrite(ledPin,v);
+}
 
 void print_ip_status(){
   Serial.print("WiFi connected \n");
